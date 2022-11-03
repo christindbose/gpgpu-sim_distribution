@@ -778,9 +778,6 @@ kernel_info_t::kernel_info_t(dim3 gridDim, dim3 blockDim,
       num_blocks() * entry->gpgpu_ctx->device_runtime->g_TB_launch_latency;
 
   cache_config_set = false;
-
-  //Mahmoud: MCM support
-  cta_buffer_per_chip.resize(MAX_GPU_CHIPs);
 }
 
 /*A snapshot of the texture mappings needs to be stored in the kernel's info as

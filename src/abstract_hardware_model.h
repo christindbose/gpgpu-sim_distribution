@@ -222,7 +222,6 @@ struct CUstream_st;
 extern std::map<void *, void **> pinned_memory;
 extern std::map<void *, size_t> pinned_memory_size;
 
-#define MAX_GPU_CHIPs 8
 class kernel_info_t {
  public:
   //   kernel_info_t()
@@ -269,55 +268,7 @@ class kernel_info_t {
     m_next_tid.y = 0;
     m_next_tid.z = 0;
   }
-
-  void increment_cta_id(unsigned chip_id, unsigned cta_grain)
-   {
-	   if(cta_buffer_per_chip[chip_id].size() > 0) {
-		   m_next_cta_per_chip[chip_id] = cta_buffer_per_chip[chip_id].front();
-		   cta_buffer_per_chip[chip_id].pop_front();
-		   m_next_tid_per_chip[chip_id].x=0;
-		   m_next_tid_per_chip[chip_id].y=0;
-		   m_next_tid_per_chip[chip_id].z=0;
-	   } else {
-		   while(more_ctas_to_run() && cta_buffer_per_chip[chip_id].size() <= cta_grain) {
-			   cta_buffer_per_chip[chip_id].push_back(m_next_cta);
-			   increment_cta_id();
-		   }
-		   assert(cta_buffer_per_chip[chip_id].size() > 0);
-		   m_next_cta_per_chip[chip_id] = cta_buffer_per_chip[chip_id].front();
-		   cta_buffer_per_chip[chip_id].pop_front();
-		   m_next_tid_per_chip[chip_id].x=0;
-		   m_next_tid_per_chip[chip_id].y=0;
-		   m_next_tid_per_chip[chip_id].z=0;
-	   }
-   }
-
-  bool more_ctas_to_run() const
-   {
-      return (m_next_cta.x < m_grid_dim.x && m_next_cta.y < m_grid_dim.y && m_next_cta.z < m_grid_dim.z );
-   }
-
-  bool no_more_ctas_to_run_per_chip(unsigned chip_id) const
-   {
-	 return cta_buffer_per_chip[chip_id].size() == 0;
-   }
-  
-  bool no_more_ctas_to_run(unsigned chip_id) const
-   {
- 	 return no_more_ctas_to_run() && no_more_ctas_to_run_per_chip(chip_id);
-   }
-
-  
-
-  dim3 get_next_cta_id(bool chip_mode, unsigned chip_id) const {
-	   if(chip_mode)
-		   return m_next_cta_per_chip[chip_id];
-	   else
-		   return m_next_cta;
-  }
-
-  //dim3 get_next_cta_id() const { return m_next_cta; }
-
+  dim3 get_next_cta_id() const { return m_next_cta; }
   unsigned get_next_cta_id_single() const {
     return m_next_cta.x + m_grid_dim.x * m_next_cta.y +
            m_grid_dim.x * m_grid_dim.y * m_next_cta.z;
@@ -326,60 +277,19 @@ class kernel_info_t {
     return (m_next_cta.x >= m_grid_dim.x || m_next_cta.y >= m_grid_dim.y ||
             m_next_cta.z >= m_grid_dim.z);
   }
-  
-  /*
+
   void increment_thread_id() {
     increment_x_then_y_then_z(m_next_tid, m_block_dim);
   }
-  */
-  void increment_thread_id(bool chip_mode, unsigned chip_id) {
-	   if(chip_mode)
-		   increment_x_then_y_then_z(m_next_tid_per_chip[chip_id],m_block_dim);
-	   else
-		   increment_x_then_y_then_z(m_next_tid,m_block_dim);
-  }
-
-
-
-  //dim3 get_next_thread_id_3d() const { return m_next_tid; }
-
-  dim3 get_next_thread_id_3d(bool chip_mode, unsigned chip_id) const  {
-	   if(chip_mode)
-		   return m_next_tid_per_chip[chip_id];
-	   else
-		   return m_next_tid;
-   }
-
-  /*
+  dim3 get_next_thread_id_3d() const { return m_next_tid; }
   unsigned get_next_thread_id() const {
     return m_next_tid.x + m_block_dim.x * m_next_tid.y +
            m_block_dim.x * m_block_dim.y * m_next_tid.z;
   }
-  */
-  unsigned get_next_thread_id(bool chip_mode, unsigned chip_id) const {
-	   if(chip_mode)
-		   return m_next_tid_per_chip[chip_id].x + m_block_dim.x*m_next_tid_per_chip[chip_id].y + m_block_dim.x*m_block_dim.y*m_next_tid_per_chip[chip_id].z;
-	   else
-		   return m_next_tid.x + m_block_dim.x*m_next_tid.y + m_block_dim.x*m_block_dim.y*m_next_tid.z;
-  }
-
-
-
-  /*
   bool more_threads_in_cta() const {
     return m_next_tid.z < m_block_dim.z && m_next_tid.y < m_block_dim.y &&
            m_next_tid.x < m_block_dim.x;
   }
-  */
-
-   bool more_threads_in_cta(bool chip_mode, unsigned chip_id) const
-   {
-	   if(chip_mode)
-		    return m_next_tid_per_chip[chip_id].z < m_block_dim.z && m_next_tid_per_chip[chip_id].y < m_block_dim.y && m_next_tid_per_chip[chip_id].x < m_block_dim.x;
-	   else
-        return m_next_tid.z < m_block_dim.z && m_next_tid.y < m_block_dim.y && m_next_tid.x < m_block_dim.x;
-   }
-
   unsigned get_uid() const { return m_uid; }
   std::string get_name() const { return name(); }
   std::string name() const;
@@ -424,11 +334,6 @@ class kernel_info_t {
   dim3 m_block_dim;
   dim3 m_next_cta;
   dim3 m_next_tid;
-
-  //Mahmoud: MCM support
-  dim3 m_next_cta_per_chip[MAX_GPU_CHIPs];
-  dim3 m_next_tid_per_chip[MAX_GPU_CHIPs];
-  std::vector< std::deque< dim3 > > cta_buffer_per_chip;
 
   unsigned m_num_cores_running;
 
