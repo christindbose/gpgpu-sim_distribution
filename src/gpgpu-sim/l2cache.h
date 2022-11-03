@@ -158,6 +158,20 @@ class memory_partition_unit {
   class gpgpu_sim *m_gpu;
 };
 
+class external_partition_unit : public memory_partition_unit
+{
+	int external_id;
+public:
+	external_partition_unit( unsigned partition_id, const struct memory_config *config, class memory_stats_t *stats, int m_external_id,  gpgpu_sim *gpu)
+    : memory_partition_unit( partition_id, config, stats, gpu )
+
+	{
+		external_id = m_external_id;
+	}
+
+   virtual void dram_cycle();
+};
+
 class memory_sub_partition {
  public:
   memory_sub_partition(unsigned sub_partition_id, const memory_config *config,
