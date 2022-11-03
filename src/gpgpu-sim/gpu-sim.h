@@ -71,6 +71,11 @@ extern tr1_hash_map<new_addr_type, unsigned> address_random_interleaving;
 
 enum dram_ctrl_t { DRAM_FIFO = 0, DRAM_FRFCFS = 1 };
 
+enum mcm_partition_mapping_t {
+  CONSECUTIVE=0,
+  ROUND_ROBIN=1
+};
+
 enum hw_perf_t {
   HW_BENCH_NAME=0,
   HW_KERNEL_NAME,
@@ -678,6 +683,8 @@ class gpgpu_sim : public gpgpu_t {
                                       // stat printout
   virtual void createSIMTCluster() = 0;
 
+  tr1_hash_map<new_addr_type,unsigned> virtual_tlb;
+
  public:
   unsigned long long gpu_sim_insn;
   unsigned long long gpu_tot_sim_insn;
@@ -703,6 +710,11 @@ class gpgpu_sim : public gpgpu_t {
   bool has_special_cache_config(std::string kernel_name);
   void change_cache_config(FuncCache cache_config);
   void set_cache_config(std::string kernel_name);
+
+  //Mahmoud: Multi chip modules
+   void set_vm_phyiscal_partition_id(mem_fetch* mf, unsigned chip_id);
+ private:
+   unsigned vm_map_partition_id_to_chip(unsigned original_parition_id, unsigned new_chip_id);
 
   // Jin: functional simulation for CDP
  private:
