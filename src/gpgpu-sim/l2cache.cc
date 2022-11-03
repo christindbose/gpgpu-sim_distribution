@@ -48,6 +48,8 @@
 #include "mem_latency_stat.h"
 #include "shader.h"
 
+#include "icnt_wrapper.h"
+
 mem_fetch *partition_mf_allocator::alloc(new_addr_type addr,
                                          mem_access_type type, unsigned size,
                                          bool wr,

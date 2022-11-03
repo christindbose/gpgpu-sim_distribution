@@ -72,7 +72,7 @@ extern tr1_hash_map<new_addr_type, unsigned> address_random_interleaving;
 enum dram_ctrl_t { DRAM_FIFO = 0, DRAM_FRFCFS = 1 };
 
 enum mcm_partition_mapping_t {
-  CONSECUTIVE=0,
+  CONSECUTIVE_MAP=0,
   ROUND_ROBIN=1
 };
 
