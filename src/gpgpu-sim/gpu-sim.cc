@@ -57,6 +57,7 @@
 #include "../abstract_hardware_model.h"
 #include "../cuda-sim/cuda-sim.h"
 #include "../cuda-sim/cuda_device_runtime.h"
+#include "../tr1_hash_map.h"
 #include "../cuda-sim/ptx-stats.h"
 #include "../cuda-sim/ptx_ir.h"
 #include "../debug.h"
@@ -401,6 +402,30 @@ void shader_core_config::reg_options(class OptionParser *opp) {
       "Maximum number of named barriers per CTA (default 16)", "16");
   option_parser_register(opp, "-gpgpu_n_clusters", OPT_UINT32, &n_simt_clusters,
                          "number of processing clusters", "10");
+  option_parser_register(opp, "-multi_chip_mode", OPT_BOOL, &multi_chip_mode,
+                 "multi_chip_mode on or off",
+                 "0");
+  option_parser_register(opp, "-n_gpu_chips", OPT_UINT32, &n_gpu_chips,
+                 "number of gpu chiplets",
+                 "1");
+  option_parser_register(opp, "-mcm_partition_mapping", OPT_UINT32, &mcm_partition_mapping,
+                 "mcm_partition_mapping 0 (consecutive) or 1 (round robin)",
+                 "0");
+  option_parser_register(opp, "-mcm_vm_ft_policy", OPT_BOOL, &mcm_vm_ft_policy,
+                 "mcm_vm_ft_policy on or off",
+                 "0");
+  option_parser_register(opp, "-mcm_vm_pagesize", OPT_UINT32, &mcm_vm_pagesize,
+                 "mcm_vm_pagesize in bytes",
+                 "2");
+  option_parser_register(opp, "-mcm_coarse_grain_cta_sched", OPT_BOOL, &mcm_coarse_grain_cta_sched,
+                 "mcm_coarse_grain_cta_sched on or off",
+                 "0");
+  option_parser_register(opp, "-mcm_cta_sched_grain", OPT_UINT32, &mcm_cta_sched_grain,
+                 "number of CTAs launched per chip when one of its core has finished",
+                 "1");
+  option_parser_register(opp, "-cache_remote_data", OPT_BOOL, &cache_remote_data,
+                 "cache_remote_data on or off",
+                 "0");
   option_parser_register(opp, "-gpgpu_n_cores_per_cluster", OPT_UINT32,
                          &n_simt_cores_per_cluster,
                          "number of simd cores per cluster", "3");
@@ -974,6 +999,34 @@ gpgpu_sim::gpgpu_sim(const gpgpu_sim_config &config, gpgpu_context *ctx)
   icnt_wrapper_init();
   icnt_create(m_shader_config->n_simt_clusters,
               m_memory_config->m_n_mem_sub_partition);
+  
+  //create chips
+    m_gpu_chip = new gpu_chip*[m_shader_config->n_gpu_chips];
+    for (unsigned i=0;i<m_shader_config->n_gpu_chips;i++) {
+    	m_gpu_chip[i] = new gpu_chip(config, i);
+    	for(unsigned j=0; j<m_gpu_chip[i]->num_cluster_per_chip;++j) {
+    		m_gpu_chip[i]->m_cluster[j] = m_cluster[i*m_gpu_chip[i]->num_cluster_per_chip + j];
+    		m_cluster[i*m_gpu_chip[i]->num_cluster_per_chip + j]->chip_id = i;
+    	}
+    	if(m_shader_config->mcm_partition_mapping == CONSECUTIVE) {
+			for(unsigned j=0; j<m_gpu_chip[i]->num_mem_per_chip;++j) {
+						m_gpu_chip[i]->m_memory_partition_unit[j] = m_memory_partition_unit[i*m_gpu_chip[i]->num_mem_per_chip + j];
+						m_memory_partition_unit[i*m_gpu_chip[i]->num_mem_per_chip + j]->chip_id = i;
+						 for (unsigned p = 0; p < m_memory_config->m_n_sub_partition_per_memory_channel; p++) {
+							 m_memory_partition_unit[i*m_gpu_chip[i]->num_mem_per_chip + j]->get_sub_partition(p)->chip_id = i;
+						 }
+			}
+    	} else if(m_shader_config->mcm_partition_mapping == ROUND_ROBIN) {
+    		for(unsigned j=0; j<m_gpu_chip[i]->num_mem_per_chip;++j) {
+						m_gpu_chip[i]->m_memory_partition_unit[j] = m_memory_partition_unit[j*m_shader_config->n_gpu_chips + i];
+						m_memory_partition_unit[j*m_shader_config->n_gpu_chips + i]->chip_id = i;
+						for (unsigned p = 0; p < m_memory_config->m_n_sub_partition_per_memory_channel; p++) {
+								m_memory_partition_unit[j*m_shader_config->n_gpu_chips + i]->get_sub_partition(p)->chip_id = i;
+						}
+    				}
+    	}
+    	else assert(0);
+    }
 
   time_vector_create(NUM_MEM_REQ_STAT);
   fprintf(stdout,
@@ -991,6 +1044,49 @@ gpgpu_sim::gpgpu_sim(const gpgpu_sim_config &config, gpgpu_context *ctx)
   // Jin: functional simulation for CDP
   m_functional_sim = false;
   m_functional_sim_kernel = NULL;
+}
+
+//Mahmoud: Multi chip modules
+void gpgpu_sim::set_vm_phyiscal_partition_id(mem_fetch* mf, unsigned chip_id){
+
+	new_addr_type address = mf->get_addr();
+	new_addr_type virtual_page_address = ( address & (m_shader_config->mcm_vm_pagesize-1));
+	tr1_hash_map<new_addr_type,unsigned>::const_iterator got = virtual_tlb.find (virtual_page_address);
+	  if ( got == virtual_tlb.end() ) {
+	      //Not found, i.e. first access
+		  virtual_tlb[virtual_page_address] = chip_id;
+		  //if the pariiton already mapped to my chip, then return
+		  if(m_memory_sub_partition[mf->get_sub_partition_id()]->chip_id == chip_id)
+			  return;
+
+		  //otherwise, map to my chip
+		  unsigned new_sub_partition_id = vm_map_partition_id_to_chip(mf->get_sub_partition_id(), chip_id);
+		  assert(new_sub_partition_id >= 0 && new_sub_partition_id < m_memory_config->m_n_mem_sub_partition);
+		  mf->set_sub_partition_id(new_sub_partition_id/m_memory_config->m_n_sub_partition_per_memory_channel , new_sub_partition_id);
+	  }
+	  else if (got->second != chip_id) {
+		  //the page already mapped to other chip
+		  //get the new partition id
+		  unsigned new_sub_partition_id = vm_map_partition_id_to_chip(mf->get_sub_partition_id(), got->second);
+		  assert(new_sub_partition_id >= 0 && new_sub_partition_id < m_memory_config->m_n_mem_sub_partition);
+		  mf->set_sub_partition_id(new_sub_partition_id/m_memory_config->m_n_sub_partition_per_memory_channel , new_sub_partition_id);
+	  }
+	  else if (got->second == chip_id) {
+	 	  //do nothing!
+	 	 	 return;
+	  }
+}
+
+unsigned gpgpu_sim::vm_map_partition_id_to_chip(unsigned original_sub_parition_id, unsigned new_chip_id){
+
+	if(m_shader_config->mcm_partition_mapping == CONSECUTIVE) {
+		unsigned n_sub_parition_per_chip = m_gpu_chip[0]->num_mem_per_chip * m_memory_config->m_n_sub_partition_per_memory_channel;
+		return ((original_sub_parition_id % n_sub_parition_per_chip) + (new_chip_id * n_sub_parition_per_chip));
+	} else if(m_shader_config->mcm_partition_mapping == ROUND_ROBIN) {
+		unsigned original_chip_id = m_memory_sub_partition[original_sub_parition_id]->chip_id;
+		return (original_sub_parition_id + (new_chip_id - original_chip_id));
+	}
+	else assert(0);
 }
 
 int gpgpu_sim::shared_mem_size() const {
@@ -1694,9 +1790,14 @@ void shader_core_ctx::release_shader_resource_1block(unsigned hw_ctaid,
 unsigned exec_shader_core_ctx::sim_init_thread(
     kernel_info_t &kernel, ptx_thread_info **thread_info, int sid, unsigned tid,
     unsigned threads_left, unsigned num_threads, core_t *core,
-    unsigned hw_cta_id, unsigned hw_warp_id, gpgpu_t *gpu) {
+    unsigned hw_cta_id, unsigned hw_warp_id, gpgpu_t *gpu, bool isInFunctionalSimulationMode,
+    unsigned chip_id, bool multi_chip_mode, bool mcm_coarse_grain_cta_sched,
+    unsigned mcm_cta_sched_grain) {
   return ptx_sim_init_thread(kernel, thread_info, sid, tid, threads_left,
-                             num_threads, core, hw_cta_id, hw_warp_id, gpu);
+                             num_threads, core, hw_cta_id, hw_warp_id, gpu,
+                             isInFunctionalSimulationMode, chip_id,
+                             multi_chip_mode, mcm_coarse_grain_cta_sched,
+                             mcm_cta_sched_grain);
 }
 
 void shader_core_ctx::issue_block2core(kernel_info_t &kernel) {
@@ -1767,7 +1868,8 @@ void shader_core_ctx::issue_block2core(kernel_info_t &kernel) {
     nthreads_in_block += sim_init_thread(
         kernel, &m_thread[i], m_sid, i, cta_size - (i - start_thread),
         m_config->n_thread_per_shader, this, free_cta_hw_id, warp_id,
-        m_cluster->get_gpu());
+        m_cluster->get_gpu(),false,m_cluster->chip_id,m_config->multi_chip_mode,m_config->mcm_coarse_grain_cta_sched,m_config->mcm_cta_sched_grain);
+
     m_threadState[i].m_active = true;
     // load thread local memory and register file
     if (m_gpu->resume_option == 1 && kernel.get_uid() == m_gpu->resume_kernel &&

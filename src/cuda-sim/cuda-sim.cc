@@ -2035,7 +2035,11 @@ unsigned ptx_sim_init_thread(kernel_info_t &kernel,
                              unsigned tid, unsigned threads_left,
                              unsigned num_threads, core_t *core,
                              unsigned hw_cta_id, unsigned hw_warp_id,
-                             gpgpu_t *gpu, bool isInFunctionalSimulationMode) {
+                             gpgpu_t *gpu, bool isInFunctionalSimulationMode,
+                             unsigned chip_id,
+							               bool multi_chip_mode,
+							               bool mcm_coarse_grain_cta_sched,
+							               unsigned mcm_cta_sched_grain) {
   std::list<ptx_thread_info *> &active_threads = kernel.active_threads();
 
   static std::map<unsigned, memory_space *> shared_memory_lookup;
@@ -2072,9 +2076,23 @@ unsigned ptx_sim_init_thread(kernel_info_t &kernel,
     return 1;
   }
 
+  /*
   if (kernel.no_more_ctas_to_run()) {
     return 0;  // finished!
   }
+  */
+
+  bool multi_chip_mode_with_coarse_sched = multi_chip_mode && mcm_coarse_grain_cta_sched;
+  
+  if(multi_chip_mode_with_coarse_sched) {
+	   if ( kernel.no_more_ctas_to_run(chip_id)  ) {
+		  return 0; //finished!
+	   }
+   } else {
+	   if ( kernel.no_more_ctas_to_run()  ) {
+	  		  return 0; //finished!
+	    }
+   }
 
   if (threads_left < kernel.threads_per_cta()) {
     return 0;
@@ -2125,11 +2143,20 @@ unsigned ptx_sim_init_thread(kernel_info_t &kernel,
 
   std::map<unsigned, memory_space *> &local_mem_lookup =
       local_memory_lookup[sid];
+
+  while( kernel.more_threads_in_cta(multi_chip_mode_with_coarse_sched, chip_id) ) {
+      dim3 ctaid3d = kernel.get_next_cta_id(multi_chip_mode_with_coarse_sched, chip_id);
+      unsigned new_tid = kernel.get_next_thread_id(multi_chip_mode_with_coarse_sched, chip_id);
+      dim3 tid3d = kernel.get_next_thread_id_3d(multi_chip_mode_with_coarse_sched, chip_id);
+      kernel.increment_thread_id(multi_chip_mode_with_coarse_sched, chip_id);
+  /*
   while (kernel.more_threads_in_cta()) {
     dim3 ctaid3d = kernel.get_next_cta_id();
     unsigned new_tid = kernel.get_next_thread_id();
     dim3 tid3d = kernel.get_next_thread_id_3d();
     kernel.increment_thread_id();
+  */
+
     new_tid += tid;
     ptx_thread_info *thd = new ptx_thread_info(kernel);
     ptx_warp_info *warp_info = NULL;
@@ -2184,7 +2211,12 @@ unsigned ptx_sim_init_thread(kernel_info_t &kernel,
     fflush(stdout);
   }
 
-  kernel.increment_cta_id();
+  //kernel.increment_cta_id();
+
+  if(multi_chip_mode_with_coarse_sched)
+	   kernel.increment_cta_id(chip_id,mcm_cta_sched_grain);
+  else
+	   kernel.increment_cta_id();
 
   assert(active_threads.size() <= threads_left);
   *thread_info = active_threads.front();
