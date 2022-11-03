@@ -468,6 +468,7 @@ class gpgpu_sim_config : public power_config,
   unsigned long long liveness_message_freq;
 
   friend class gpgpu_sim;
+  friend class gpu_chip;
 };
 
 struct occupancy_stats {
@@ -519,6 +520,30 @@ class watchpoint_event {
   const ptx_thread_info *m_thread;
   const ptx_instruction *m_inst;
 };
+
+class gpu_chip {
+
+public:
+	gpu_chip( const gpgpu_sim_config &config, int m_chip_id ) {
+		chip_id = m_chip_id;
+		assert(config.m_shader_config.n_simt_clusters % config.m_shader_config.n_gpu_chips == 0);
+		assert(config.m_memory_config.m_n_mem % config.m_shader_config.n_gpu_chips == 0);
+		num_cluster_per_chip = config.m_shader_config.n_simt_clusters / config.m_shader_config.n_gpu_chips;
+		num_mem_per_chip = config.m_memory_config.m_n_mem / config.m_shader_config.n_gpu_chips;
+		m_cluster = new class simt_core_cluster*[num_cluster_per_chip];
+		m_memory_partition_unit = new class memory_partition_unit*[num_mem_per_chip];
+	}
+	~gpu_chip(){
+		delete[] m_cluster;
+		delete[] m_memory_partition_unit;
+	}
+	int chip_id;
+	int num_cluster_per_chip;
+	int num_mem_per_chip;
+	class simt_core_cluster **m_cluster;
+	class memory_partition_unit **m_memory_partition_unit;
+};
+
 
 class gpgpu_sim : public gpgpu_t {
  public:
@@ -629,6 +654,7 @@ class gpgpu_sim : public gpgpu_t {
   class simt_core_cluster **m_cluster;
   class memory_partition_unit **m_memory_partition_unit;
   class memory_sub_partition **m_memory_sub_partition;
+  class gpu_chip **m_gpu_chip;
 
   std::vector<kernel_info_t *> m_running_kernels;
   unsigned m_last_issued_kernel;

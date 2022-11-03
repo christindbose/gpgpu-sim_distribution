@@ -4470,7 +4470,16 @@ void simt_core_cluster::icnt_inject_request_packet(class mem_fetch *mf) {
   if (!mf->get_is_write() && !mf->isatomic()) {
     packet_size = mf->get_ctrl_size();
   }
+  //m_stats->m_outgoing_traffic_stats->record_traffic(mf, packet_size);
+  
   m_stats->m_outgoing_traffic_stats->record_traffic(mf, packet_size);
+
+   //Mahmoud: MCM support
+   if(m_config->multi_chip_mode && m_config->mcm_vm_ft_policy) {
+	   m_gpu->set_vm_phyiscal_partition_id(mf, chip_id);
+   }
+
+
   unsigned destination = mf->get_sub_partition_id();
   mf->set_status(IN_ICNT_TO_MEM,
                  m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle);

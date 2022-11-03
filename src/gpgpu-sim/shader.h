@@ -1648,6 +1648,16 @@ class shader_core_config : public core_config {
 
   unsigned n_simt_cores_per_cluster;
   unsigned n_simt_clusters;
+
+  bool multi_chip_mode;
+  unsigned n_gpu_chips;
+  unsigned mcm_partition_mapping;
+  bool mcm_vm_ft_policy;
+  unsigned mcm_vm_pagesize;
+  bool mcm_coarse_grain_cta_sched;
+  unsigned mcm_cta_sched_grain;
+  bool cache_remote_data;
+
   unsigned n_simt_ejection_buffer_size;
   unsigned ldst_unit_response_queue_size;
 
@@ -2391,8 +2401,10 @@ class shader_core_ctx : public core_t {
                                    unsigned tid, unsigned threads_left,
                                    unsigned num_threads, core_t *core,
                                    unsigned hw_cta_id, unsigned hw_warp_id,
-                                   gpgpu_t *gpu) = 0;
-
+                                   gpgpu_t *gpu, bool isInFunctionalSimulationMode,
+                                   unsigned chip_id, bool multi_chip_mode, 
+                                   bool mcm_coarse_grain_cta_sched, unsigned mcm_cta_sched_grain) = 0;
+  
   virtual void create_shd_warp() = 0;
 
   virtual const warp_inst_t *get_next_inst(unsigned warp_id,
@@ -2593,6 +2605,8 @@ class simt_core_cluster {
   float get_current_occupancy(unsigned long long &active,
                               unsigned long long &total) const;
   virtual void create_shader_core_ctx() = 0;
+
+  unsigned chip_id;
 
  protected:
   unsigned m_cluster_id;

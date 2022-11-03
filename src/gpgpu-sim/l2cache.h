@@ -103,6 +103,7 @@ class memory_partition_unit {
   int global_sub_partition_id_to_local_id(int global_sub_partition_id) const;
 
   unsigned get_mpid() const { return m_id; }
+  unsigned chip_id;
 
   class gpgpu_sim *get_mgpu() const {
     return m_gpu;
@@ -204,6 +205,8 @@ class memory_sub_partition {
     m_L2cache->force_tag_access(addr, m_memcpy_cycle_offset + time, mask);
     m_memcpy_cycle_offset += 1;
   }
+
+  unsigned chip_id;
 
  private:
   // data
