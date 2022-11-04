@@ -303,6 +303,8 @@ void memory_partition_unit::simple_dram_model_cycle() {
   }
   //}
 }
+void external_partition_unit::dram_cycle() {
+}
 
 void memory_partition_unit::dram_cycle() {
   // pop completed memory request from dram and push it to dram-to-L2 queue
