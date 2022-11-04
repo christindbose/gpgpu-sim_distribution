@@ -234,6 +234,10 @@ int memory_partition_unit::global_sub_partition_id_to_local_id(
           m_id * m_config->m_n_sub_partition_per_memory_channel);
 }
 
+void external_partition_unit::dram_cycle()
+{
+}
+
 void memory_partition_unit::simple_dram_model_cycle() {
   // pop completed memory request from dram and push it to dram-to-L2 queue
   // of the original sub partition
