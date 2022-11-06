@@ -4413,6 +4413,10 @@ void simt_core_cluster::cache_invalidate() {
 bool simt_core_cluster::icnt_injection_buffer_full(unsigned size, bool write) {
   unsigned request_size = size;
   if (!write) request_size = READ_PACKET_SIZE;
+
+  if(m_config->scale_down_on_chip_traffic)
+    	request_size = ::icnt_get_flit_size() * m_config->scale_down_on_chip_traffic;
+
   return !::icnt_has_buffer(m_cluster_id, request_size);
 }
 
@@ -4483,12 +4487,28 @@ void simt_core_cluster::icnt_inject_request_packet(class mem_fetch *mf) {
   unsigned destination = mf->get_sub_partition_id();
   mf->set_status(IN_ICNT_TO_MEM,
                  m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle);
+
+  /*
   if (!mf->get_is_write() && !mf->isatomic())
     ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void *)mf,
                 mf->get_ctrl_size());
   else
     ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void *)mf,
                 mf->size());
+  */
+
+  if(m_config->scale_down_on_chip_traffic){
+	   unsigned request_size = ::icnt_get_flit_size() * m_config->scale_down_on_chip_traffic;
+	    ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void*)mf, request_size );
+   }
+   else
+   {
+	   if (!mf->get_is_write() && !mf->isatomic())
+	      ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void*)mf, mf->get_ctrl_size() );
+	   else
+	      ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void*)mf, mf->size());
+
+   }
 }
 
 void simt_core_cluster::icnt_cycle() {

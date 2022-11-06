@@ -1984,6 +1984,10 @@ void gpgpu_sim::cycle() {
       if (mf) {
         unsigned response_size =
             mf->get_is_write() ? mf->get_ctrl_size() : mf->size();
+
+        if(m_shader_config->scale_down_on_chip_traffic && mf->m_chiplet_type == ON_CHIPLET)
+            response_size = ::icnt_get_flit_size() * m_shader_config->scale_down_on_chip_traffic;
+            
         if (::icnt_has_buffer(m_shader_config->mem2device(i), response_size)) {
           // if (!mf->get_is_write())
           mf->set_return_timestamp(gpu_sim_cycle + gpu_tot_sim_cycle);

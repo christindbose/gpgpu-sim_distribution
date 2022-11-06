@@ -40,6 +40,11 @@ enum mf_type {
   WRITE_ACK
 };
 
+enum req_chiplet_type {
+   OFF_CHIPLET = 0,
+   ON_CHIPLET
+};
+
 #define MF_TUP_BEGIN(X) enum X {
 #define MF_TUP(X) X
 #define MF_TUP_END(X) \
@@ -126,6 +131,8 @@ class mem_fetch {
   const memory_config *get_mem_config() { return m_mem_config; }
 
   unsigned get_num_flits(bool simt_to_mem);
+
+  enum req_chiplet_type m_chiplet_type;
 
   mem_fetch *get_original_mf() { return original_mf; }
   mem_fetch *get_original_wr_mf() { return original_wr_mf; }

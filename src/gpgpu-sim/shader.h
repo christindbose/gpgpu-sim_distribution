@@ -1661,6 +1661,8 @@ class shader_core_config : public core_config {
   unsigned n_simt_ejection_buffer_size;
   unsigned ldst_unit_response_queue_size;
 
+  unsigned scale_down_on_chip_traffic;
+  
   int simt_core_sim_order;
 
   unsigned smem_latency;
