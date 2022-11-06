@@ -405,7 +405,7 @@ void shader_core_config::reg_options(class OptionParser *opp) {
   option_parser_register(opp, "-multi_chip_mode", OPT_BOOL, &multi_chip_mode,
                  "multi_chip_mode on or off",
                  "0");
-  option_parser_register(opp, "-scale_down_on_chip_traffic", OPT_UINT32, &multi_chip_mode,
+  option_parser_register(opp, "-scale_down_on_chip_traffic", OPT_UINT32, &scale_down_on_chip_traffic,
                  "scale_down_on_chip_traffic on or off",
                  "0");
   option_parser_register(opp, "-n_gpu_chips", OPT_UINT32, &n_gpu_chips,
