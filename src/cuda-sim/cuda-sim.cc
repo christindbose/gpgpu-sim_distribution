@@ -2038,7 +2038,7 @@ unsigned ptx_sim_init_thread(kernel_info_t &kernel,
                              gpgpu_t *gpu, bool isInFunctionalSimulationMode,
                              unsigned chip_id,
 							               bool multi_chip_mode,
-							               bool mcm_coarse_grain_cta_sched,
+							               unsigned mcm_coarse_grain_cta_sched,
 							               unsigned mcm_cta_sched_grain) {
   std::list<ptx_thread_info *> &active_threads = kernel.active_threads();
 

@@ -1,0 +1,80 @@
+router 0 node 64
+router 1 node 65
+router 2 node 66
+router 3 node 67
+router 4 node 68
+router 5 node 69
+router 6 node 70
+router 7 node 71
+router 8 node 72
+router 9 node 73
+router 10 node 74
+router 11 node 75
+router 12 node 76
+router 13 node 77
+router 14 node 78
+router 15 node 79
+router 16 node 80
+router 17 node 81
+router 18 node 82
+router 19 node 83
+router 20 node 84
+router 21 node 85
+router 22 node 86
+router 23 node 87
+router 24 node 88
+router 25 node 89
+router 26 node 90
+router 27 node 91
+router 28 node 92
+router 29 node 93
+router 30 node 94
+router 31 node 95
+router 32 node 96
+router 33 node 97
+router 34 node 98
+router 35 node 99
+router 36 node 100
+router 37 node 101
+router 38 node 102
+router 39 node 103
+router 40 node 104
+router 41 node 105
+router 42 node 106
+router 43 node 107
+router 44 node 108
+router 45 node 109
+router 46 node 110
+router 47 node 111
+router 48 node 112
+router 49 node 113
+router 50 node 114
+router 51 node 115
+router 52 node 116
+router 53 node 117
+router 54 node 118
+router 55 node 119
+router 56 node 120
+router 57 node 121
+router 58 node 122
+router 59 node 123
+router 60 node 124
+router 61 node 125
+router 62 node 126
+router 63 node 127
+router 64 node 0 node 1 node 2 node 3 node 4 node 5 node 6 node 7 node 8 node 9 node 10 node 11 node 12 node 13 node 14 node 15 router 0 router 4 router 8 router 12 router 16 router 20 router 24 router 28 router 32 router 36 router 40 router 44 router 48 router 52 router 56 router 60 node 128 node 132 node 136 node 140 node 144 node 148 node 152 node 156 node 160 node 164 node 168 node 172 node 176 node 180 node 184 node 188
+router 65 node 16 node 17 node 18 node 19 node 20 node 21 node 22 node 23 node 24 node 25 node 26 node 27 node 28 node 29 node 30 node 31 router 1 router 5 router 9 router 13 router 17 router 21 router 25 router 29 router 33 router 37 router 41 router 45 router 49 router 53 router 57 router 61 node 129 node 133 node 137 node 141 node 145 node 149 node 153 node 157 node 161 node 165 node 169 node 173 node 177 node 181 node 185 node 189
+router 66 node 32 node 33 node 34 node 35 node 36 node 37 node 38 node 39 node 40 node 41 node 42 node 43 node 44 node 45 node 46 node 47 router 2 router 6 router 10 router 14 router 18 router 22 router 26 router 30 router 34 router 38 router 42 router 46 router 50 router 54 router 58 router 62 node 130 node 134 node 138 node 142 node 146 node 150 node 154 node 158 node 162 node 166 node 170 node 174 node 178 node 182 node 186 node 190
+router 67 node 48 node 49 node 50 node 51 node 52 node 53 node 54 node 55 node 56 node 57 node 58 node 59 node 60 node 61 node 62 node 63 router 3 router 7 router 11 router 15 router 19 router 23 router 27 router 31 router 35 router 39 router 43 router 47 router 51 router 55 router 59 router 63 node 131 node 135 node 139 node 143 node 147 node 151 node 155 node 159 node 163 node 167 node 171 node 175 node 179 node 183 node 187 node 191
+router 68 router 64 router 1 router 5 router 9 router 13 router 17 router 21 router 25 router 29 router 33 router 37 router 41 router 45 router 49 router 53 router 57 router 61
+router 69 router 64 router 2 router 6 router 10 router 14 router 18 router 22 router 26 router 30 router 34 router 38 router 42 router 46 router 50 router 54 router 58 router 62
+router 70 router 64 router 3 router 7 router 11 router 15 router 19 router 23 router 27 router 31 router 35 router 39 router 43 router 47 router 51 router 55 router 59 router 63
+router 71 router 65 router 0 router 4 router 8 router 12 router 16 router 20 router 24 router 28 router 32 router 36 router 40 router 44 router 48 router 52 router 56 router 60
+router 72 router 65 router 2 router 6 router 10 router 14 router 18 router 22 router 26 router 30 router 34 router 38 router 42 router 46 router 50 router 54 router 58 router 62
+router 73 router 65 router 3 router 7 router 11 router 15 router 19 router 23 router 27 router 31 router 35 router 39 router 43 router 47 router 51 router 55 router 59 router 63
+router 74 router 66 router 0 router 4 router 8 router 12 router 16 router 20 router 24 router 28 router 32 router 36 router 40 router 44 router 48 router 52 router 56 router 60
+router 75 router 66 router 1 router 5 router 9 router 13 router 17 router 21 router 25 router 29 router 33 router 37 router 41 router 45 router 49 router 53 router 57 router 61
+router 76 router 66 router 3 router 7 router 11 router 15 router 19 router 23 router 27 router 31 router 35 router 39 router 43 router 47 router 51 router 55 router 59 router 63
+router 77 router 67 router 0 router 4 router 8 router 12 router 16 router 20 router 24 router 28 router 32 router 36 router 40 router 44 router 48 router 52 router 56 router 60
+router 78 router 67 router 1 router 5 router 9 router 13 router 17 router 21 router 25 router 29 router 33 router 37 router 41 router 45 router 49 router 53 router 57 router 61
+router 79 router 67 router 2 router 6 router 10 router 14 router 18 router 22 router 26 router 30 router 34 router 38 router 42 router 46 router 50 router 54 router 58 router 62

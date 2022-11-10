@@ -2398,14 +2398,14 @@ class shader_core_ctx : public core_t {
                                              unsigned tid) = 0;
   virtual void func_exec_inst(warp_inst_t &inst) = 0;
 
-  virtual unsigned sim_init_thread(kernel_info_t &kernel,
+  virtual unsigned int sim_init_thread(kernel_info_t &kernel,
                                    ptx_thread_info **thread_info, int sid,
                                    unsigned tid, unsigned threads_left,
                                    unsigned num_threads, core_t *core,
                                    unsigned hw_cta_id, unsigned hw_warp_id,
                                    gpgpu_t *gpu, bool isInFunctionalSimulationMode,
                                    unsigned chip_id, bool multi_chip_mode, 
-                                   bool mcm_coarse_grain_cta_sched, unsigned mcm_cta_sched_grain) = 0;
+                                   unsigned mcm_coarse_grain_cta_sched, unsigned mcm_cta_sched_grain) = 0;
   
   virtual void create_shd_warp() = 0;
 
@@ -2542,14 +2542,14 @@ class exec_shader_core_ctx : public shader_core_ctx {
                                    unsigned hw_cta_id, unsigned hw_warp_id,
                                    gpgpu_t *gpu);
   */
-  virtual unsigned sim_init_thread(kernel_info_t &kernel, 
+  virtual unsigned int sim_init_thread(kernel_info_t &kernel, 
                                   ptx_thread_info **thread_info, int sid, 
                                   unsigned tid, unsigned threads_left, 
                                   unsigned num_threads, core_t *core,
                                   unsigned hw_cta_id, unsigned hw_warp_id, 
                                   gpgpu_t *gpu, bool isInFunctionalSimulationMode,
                                   unsigned chip_id, bool multi_chip_mode, 
-                                  bool mcm_coarse_grain_cta_sched, unsigned mcm_cta_sched_grain);
+                                  unsigned mcm_coarse_grain_cta_sched, unsigned mcm_cta_sched_grain);
 
   virtual void create_shd_warp();
   virtual const warp_inst_t *get_next_inst(unsigned warp_id, address_type pc);

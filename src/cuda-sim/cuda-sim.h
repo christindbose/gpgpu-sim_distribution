@@ -58,7 +58,7 @@ unsigned ptx_sim_init_thread(kernel_info_t &kernel,
                              bool functionalSimulationMode = false,
                              unsigned chip_id = 0,
 							               bool multi_chip_mode = false,
-							               bool mcm_coarse_grain_cta_sched = false,
+							               unsigned mcm_coarse_grain_cta_sched = 0,
 							               unsigned mcm_cta_sched_grain = 1);
 const struct gpgpu_ptx_sim_info *ptx_sim_kernel_info(
     const class function_info *kernel);
