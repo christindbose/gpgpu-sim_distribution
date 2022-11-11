@@ -1003,6 +1003,7 @@ gpgpu_sim::gpgpu_sim(const gpgpu_sim_config &config, gpgpu_context *ctx)
   icnt_create(m_shader_config->n_simt_clusters,
               m_memory_config->m_n_mem_sub_partition);
   
+  /*
   //create chips
     m_gpu_chip = new gpu_chip*[m_shader_config->n_gpu_chips];
     for (unsigned i=0;i<m_shader_config->n_gpu_chips;i++) {
@@ -1030,6 +1031,8 @@ gpgpu_sim::gpgpu_sim(const gpgpu_sim_config &config, gpgpu_context *ctx)
     	}
     	else assert(0);
     }
+
+    */
 
   time_vector_create(NUM_MEM_REQ_STAT);
   fprintf(stdout,
