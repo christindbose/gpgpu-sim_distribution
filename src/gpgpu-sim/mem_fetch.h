@@ -45,6 +45,14 @@ enum req_chiplet_type {
    ON_CHIPLET
 };
 
+enum req_traffic_type {
+   SM_TO_PARTITION_REQ = 0,
+   PARTITION_TO_PARTITION_REQ = 1,
+   PARTITION_TO_PARTITION_REP = 2,
+   PARTITION_TO_SM_REP = 3
+};
+
+
 #define MF_TUP_BEGIN(X) enum X {
 #define MF_TUP(X) X
 #define MF_TUP_END(X) \
@@ -105,8 +113,6 @@ class mem_fetch {
   enum mf_type get_type() const { return m_type; }
   bool isatomic() const;
 
-  void set_sub_partition_id(unsigned partition_id, unsigned sub_partition_id) {  m_raw_addr.chip = partition_id; m_raw_addr.sub_partition = sub_partition_id; }
-
   void set_return_timestamp(unsigned t) { m_timestamp2 = t; }
   void set_icnt_receive_time(unsigned t) { m_icnt_receive_time = t; }
   unsigned get_timestamp() const { return m_timestamp; }
@@ -133,9 +139,20 @@ class mem_fetch {
   unsigned get_num_flits(bool simt_to_mem);
 
   enum req_chiplet_type m_chiplet_type;
+  enum req_traffic_type m_req_traffic_type;
 
   mem_fetch *get_original_mf() { return original_mf; }
   mem_fetch *get_original_wr_mf() { return original_wr_mf; }
+  
+  bool is_par_to_par_req() const { return m_req_traffic_type == PARTITION_TO_PARTITION_REQ; } ;
+  void set_sub_partition_id(unsigned partition_id, unsigned sub_partition_id) {  m_raw_addr.chip = partition_id; m_raw_addr.sub_partition = sub_partition_id; } 
+  void set_home_sub_partiton_id(unsigned partition_id, unsigned sub_partition_id) {  home_partiton_id = partition_id; home_sub_partiton_id = sub_partition_id; }
+  void set_remote_sub_partiton_id(unsigned partition_id, unsigned sub_partition_id) {  remote_partiton_id = partition_id; remote_sub_partiton_id = sub_partition_id; }
+
+  unsigned home_partiton_id;
+  unsigned home_sub_partiton_id;
+  unsigned remote_partiton_id;
+  unsigned remote_sub_partiton_id;
 
  private:
   // request source information
