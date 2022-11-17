@@ -1095,6 +1095,51 @@ unsigned gpgpu_sim::vm_map_partition_id_to_chip(unsigned original_sub_parition_i
 	else assert(0);
 }
 
+void gpgpu_sim::set_remote_partition_id(mem_fetch* mf, unsigned chip_id){
+	assert(m_memory_sub_partition[mf->get_sub_partition_id()]->chip_id != chip_id);
+	//printf("%d %d %d \n", mf->get_sub_partition_id(), m_memory_sub_partition[mf->get_sub_partition_id()]->chip_id, chip_id);
+	//std::cout<<mf->get_sub_partition_id()<<" "<<m_memory_sub_partition[mf->get_sub_partition_id()]->chip_id<<" "<<chip_id<<std::endl;
+	unsigned new_local_sub_partition_id = vm_map_partition_id_to_chip(mf->get_sub_partition_id(), chip_id);
+	unsigned new_remote_sub_partition_id = new_local_sub_partition_id + m_memory_config->m_n_mem_sub_partition;
+	assert(new_remote_sub_partition_id < m_memory_config->m_n_mem_sub_partition + m_memory_config->m_n_external_sub_partition);
+	//printf("%d %d %d \n", new_remote_sub_partition_id, chip_id, m_external_sub_partition[new_remote_sub_partition_id - m_memory_config->m_n_mem_sub_partition]->chip_id);
+
+	//std::cout<<new_remote_sub_partition_id<<" "<<" "<<chip_id<<" "<<m_external_sub_partition[new_remote_sub_partition_id - m_memory_config->m_n_mem_sub_partition]->chip_id<<std::endl;
+
+	//if(!is_local_external_id(new_remote_sub_partition_id,chip_id)) {
+	//	printf("exiting ........ \n");
+	//	exit(0);
+	//}
+	assert(is_local_external_id(new_remote_sub_partition_id,chip_id));
+
+	mf->set_home_sub_partiton_id(mf->get_sub_partition_id()/m_memory_config->m_n_sub_partition_per_memory_channel,mf->get_sub_partition_id());
+	mf->set_remote_sub_partiton_id(new_remote_sub_partition_id/m_memory_config->m_n_sub_partition_per_memory_channel,new_remote_sub_partition_id);
+
+	mf->set_sub_partition_id(new_remote_sub_partition_id/m_memory_config->m_n_sub_partition_per_memory_channel,new_remote_sub_partition_id);
+
+}
+
+bool gpgpu_sim::is_local_external_id(unsigned external_sub_parition_id, unsigned chip_id){
+
+	return (m_external_sub_partition[external_sub_parition_id - m_memory_config->m_n_mem_sub_partition]->chip_id == chip_id);
+
+	/*gpu_chip* my_chip = m_gpu_chip[chip_id];
+	for(unsigned j=0; j<my_chip->num_external_per_chip;++j){
+
+		if(my_chip->m_external_partition_unit[j]->get_mpid() == sub_parition_id/m_memory_config->m_n_sub_partition_per_memory_channel)
+			return true;
+	}
+
+	return false;*/
+
+}
+
+unsigned gpgpu_sim::getMemSubParitionChipID(int idx)
+{
+	return m_memory_sub_partition[idx]->chip_id;
+}
+
+
 int gpgpu_sim::shared_mem_size() const {
   return m_shader_config->gpgpu_shmem_size;
 }

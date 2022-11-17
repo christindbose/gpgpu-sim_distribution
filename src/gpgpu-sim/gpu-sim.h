@@ -358,6 +358,8 @@ class memory_config {
   bool m_perf_sim_memcpy;
   bool simple_dram_model;
 
+  unsigned m_n_external_sub_partition;
+
   gpgpu_context *gpgpu_ctx;
 };
 
@@ -634,6 +636,8 @@ class gpgpu_sim : public gpgpu_t {
   // backward pointer
   class gpgpu_context *gpgpu_ctx;
 
+  unsigned getMemSubParitionChipID(int idx);
+
  private:
   // clocks
   void reinit_clock_domains(void);
@@ -655,6 +659,7 @@ class gpgpu_sim : public gpgpu_t {
   class memory_partition_unit **m_memory_partition_unit;
   class memory_sub_partition **m_memory_sub_partition;
   class gpu_chip **m_gpu_chip;
+  class memory_sub_partition **m_external_sub_partition;
 
   std::vector<kernel_info_t *> m_running_kernels;
   unsigned m_last_issued_kernel;
@@ -739,8 +744,10 @@ class gpgpu_sim : public gpgpu_t {
 
   //Mahmoud: Multi chip modules
    void set_vm_phyiscal_partition_id(mem_fetch* mf, unsigned chip_id);
+   void set_remote_partition_id(mem_fetch* mf, unsigned chip_id);
  private:
    unsigned vm_map_partition_id_to_chip(unsigned original_parition_id, unsigned new_chip_id);
+   bool is_local_external_id(unsigned sub_parition_id, unsigned chip_id);
 
   // Jin: functional simulation for CDP
  private:

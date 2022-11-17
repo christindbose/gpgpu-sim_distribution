@@ -4420,6 +4420,88 @@ bool simt_core_cluster::icnt_injection_buffer_full(unsigned size, bool write) {
   return !::icnt_has_buffer(m_cluster_id, request_size);
 }
 
+void simt_core_cluster::icnt_inject_request_packet(class mem_fetch *mf)
+{
+    // stats
+    if (mf->get_is_write()) m_stats->made_write_mfs++;
+    else m_stats->made_read_mfs++;
+    switch (mf->get_access_type()) {
+    case CONST_ACC_R: m_stats->gpgpu_n_mem_const++; break;
+    case TEXTURE_ACC_R: m_stats->gpgpu_n_mem_texture++; break;
+    case GLOBAL_ACC_R: m_stats->gpgpu_n_mem_read_global++; break;
+    //case GLOBAL_ACC_R: m_stats->gpgpu_n_mem_read_global++; printf("read_global%d\n",m_stats->gpgpu_n_mem_read_global); break;
+    case GLOBAL_ACC_W: m_stats->gpgpu_n_mem_write_global++; break;
+    case LOCAL_ACC_R: m_stats->gpgpu_n_mem_read_local++; break;
+    case LOCAL_ACC_W: m_stats->gpgpu_n_mem_write_local++; break;
+    case INST_ACC_R: m_stats->gpgpu_n_mem_read_inst++; break;
+    case L1_WRBK_ACC: m_stats->gpgpu_n_mem_write_global++; break;
+    case L2_WRBK_ACC: m_stats->gpgpu_n_mem_l2_writeback++; break;
+    case L1_WR_ALLOC_R: m_stats->gpgpu_n_mem_l1_write_allocate++; break;
+    case L2_WR_ALLOC_R: m_stats->gpgpu_n_mem_l2_write_allocate++; break;
+    default: assert(0);
+    }
+
+   // The packet size varies depending on the type of request: 
+   // - For write request and atomic request, the packet contains the data 
+   // - For read request (i.e. not write nor atomic), the packet only has control metadata
+   unsigned int packet_size = mf->size(); 
+   if (!mf->get_is_write() && !mf->isatomic()) {
+      packet_size = mf->get_ctrl_size(); 
+   }
+   m_stats->m_outgoing_traffic_stats->record_traffic(mf, packet_size);
+
+   //Mahmoud: MCM support
+   if(m_config->multi_chip_mode && m_config->mcm_vm_ft_policy) {
+	   m_gpu->set_vm_phyiscal_partition_id(mf, chip_id);
+   }
+
+   unsigned before = mf->get_sub_partition_id();
+   if(chip_id == m_gpu->getMemSubParitionChipID(mf->get_sub_partition_id())) {
+	   m_stats->on_chip_reqs++;
+	   mf->m_chiplet_type_original = ON_CHIPLET;
+   }
+   else {
+	   mf->m_chiplet_type_original = OFF_CHIPLET;
+	   switch (mf->get_access_type()) {
+	       case CONST_ACC_R: m_stats->off_chip_reqs_const++; break;
+	       case INST_ACC_R: m_stats->off_chip_reqs_insts++; break;
+	       case GLOBAL_ACC_R:
+		   {
+			   m_stats->off_chip_reqs_gloabl++;
+			   break;
+		   }
+	       case GLOBAL_ACC_W:
+		   {
+			   m_stats->off_chip_reqs_gloabl++;
+			   break;
+		   }
+	       default:   m_stats->off_chip_reqs_others++; break;
+	   }
+	   m_stats->off_chip_reqs++;
+
+	   //if(!mf->get_is_write() && !mf->isatomic())
+           m_gpu->set_remote_partition_id(mf, chip_id);
+   }
+
+   mf->m_chiplet_type = ON_CHIPLET;
+   unsigned destination = mf->get_sub_partition_id();
+   mf->set_status(IN_ICNT_TO_MEM,m_gpu->gpu_sim_cycle+m_gpu->gpu_tot_sim_cycle);
+
+   if(m_config->scale_down_on_chip_traffic){
+	   unsigned request_size = ::icnt_get_flit_size() * m_config->scale_down_on_chip_traffic;
+	    ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void*)mf, request_size );
+   }
+   else
+   {
+	   if (!mf->get_is_write() && !mf->isatomic())
+	      ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void*)mf, mf->get_ctrl_size() );
+	   else
+	      ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void*)mf, mf->size());
+
+   }
+}
+
+/*
 void simt_core_cluster::icnt_inject_request_packet(class mem_fetch *mf) {
   // stats
   if (mf->get_is_write())
@@ -4488,14 +4570,6 @@ void simt_core_cluster::icnt_inject_request_packet(class mem_fetch *mf) {
   mf->set_status(IN_ICNT_TO_MEM,
                  m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle);
 
-  /*
-  if (!mf->get_is_write() && !mf->isatomic())
-    ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void *)mf,
-                mf->get_ctrl_size());
-  else
-    ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void *)mf,
-                mf->size());
-  */
 
   if(m_config->scale_down_on_chip_traffic){
 	   unsigned request_size = ::icnt_get_flit_size() * m_config->scale_down_on_chip_traffic;
@@ -4510,6 +4584,8 @@ void simt_core_cluster::icnt_inject_request_packet(class mem_fetch *mf) {
 
    }
 }
+
+*/
 
 void simt_core_cluster::icnt_cycle() {
   if (!m_response_fifo.empty()) {

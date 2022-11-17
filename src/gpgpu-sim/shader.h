@@ -1777,6 +1777,18 @@ struct shader_core_stats_pod {
   unsigned made_write_mfs;
   unsigned made_read_mfs;
 
+  //Mahmoud: support MCM
+  unsigned long long on_chip_reqs;
+  unsigned long long off_chip_reqs;
+  unsigned long long off_chip_reqs_gloabl;
+  unsigned long long off_chip_reqs_insts;
+  unsigned long long off_chip_reqs_const;
+  unsigned long long off_chip_reqs_others;
+  unsigned long long vt_page_first_access;
+  unsigned long long vt_page_hits_chip_miss;
+  unsigned long long vt_page_hits_chip_hits;
+
+
   unsigned *gpgpu_n_shmem_bank_access;
   long *n_simt_to_mem;  // Interconnect power stats
   long *n_mem_to_simt;
