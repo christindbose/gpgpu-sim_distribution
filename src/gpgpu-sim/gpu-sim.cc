@@ -87,11 +87,6 @@ bool g_interactive_debugger_enabled = false;
 
 tr1_hash_map<new_addr_type, unsigned> address_random_interleaving;
 
-//offchiplet traffic counters
-unsigned long long off_chiplet_traffic = 0;
-unsigned long long on_chiplet_traffic = 0;
-unsigned long long total_traffic = 0;
-
 /* Clock Domains */
 
 #define CORE 0x01
@@ -1480,10 +1475,6 @@ void gpgpu_sim::gpu_print_stat() {
   printf("gpu_stall_dramfull = %d\n", gpu_stall_dramfull);
   printf("gpu_stall_icnt2sh    = %d\n", gpu_stall_icnt2sh);
 
-   printf("on_chiplet_traffic = %llu\n", on_chiplet_traffic);
-   printf("off_chiplet_traffic = %llu\n", off_chiplet_traffic);
-   printf("total_traffic = %llu\n", total_traffic);
-
   // printf("partiton_reqs_in_parallel = %lld\n", partiton_reqs_in_parallel);
   // printf("partiton_reqs_in_parallel_total    = %lld\n",
   // partiton_reqs_in_parallel_total );
@@ -2004,25 +1995,8 @@ void gpgpu_sim::cycle() {
           // if (!mf->get_is_write())
           mf->set_return_timestamp(gpu_sim_cycle + gpu_tot_sim_cycle);
           mf->set_status(IN_ICNT_TO_SHADER, gpu_sim_cycle + gpu_tot_sim_cycle);
-
-          if(mf->m_chiplet_type == ON_CHIPLET) {
-    					on_chiplet_traffic++;
-    					total_traffic++;
-              //assert(mf->m_req_traffic_type == SM_TO_PARTITION_REQ);
-              mf->m_req_traffic_type = PARTITION_TO_SM_REP;
-
-              ::icnt_push( m_shader_config->mem2device(i), mf->get_tpc(), mf, response_size );
-          }
-
-          else if(mf->m_chiplet_type == OFF_CHIPLET) {
-                //assert(mf->m_req_traffic_type == PARTITION_TO_PARTITION_REQ);
-
-                mf->m_req_traffic_type = PARTITION_TO_PARTITION_REP;
- 					      mf->set_sub_partition_id(mf->remote_partiton_id, mf->remote_sub_partiton_id);
-  	            //std::cout<<"I am here 2"<<" "<<mf->get_request_uid()<<" "<<mf->get_access_type()<<" sent from "<<i<<" to "<<mf->get_sub_partition_id()<<std::endl;
-                ::icnt_push( m_shader_config->mem2device(i), m_shader_config->mem2device(mf->get_sub_partition_id()), mf, response_size );
-          }
-
+          ::icnt_push(m_shader_config->mem2device(i), mf->get_tpc(), mf,
+                      response_size);
           m_memory_sub_partition[i]->pop();
           partiton_replys_in_parallel_per_cycle++;
         } else {
