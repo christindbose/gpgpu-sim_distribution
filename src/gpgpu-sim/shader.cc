@@ -622,6 +622,16 @@ void shader_core_stats::print(FILE *fout) const {
     thread_icount_uarch += m_num_sim_insn[i];
     warp_icount_uarch += m_num_sim_winsn[i];
   }
+
+  fprintf(fout, "on_chip_reqs = %llu\n", on_chip_reqs);
+  fprintf(fout, "off_chip_reqs = %llu\n", off_chip_reqs);
+  fprintf(fout, "off_chip_reqs_gloabl = %llu\n", off_chip_reqs_gloabl);
+  fprintf(fout, "off_chip_reqs_insts = %llu\n", off_chip_reqs_insts);
+  fprintf(fout, "off_chip_reqs_const = %llu\n", off_chip_reqs_const);
+  fprintf(fout, "off_chip_reqs_others = %llu\n", off_chip_reqs_others);
+
+  fprintf(fout, "gpgpu_n_tot_w_icount = %lld\n", warp_icount_uarch);
+
   fprintf(fout, "gpgpu_n_tot_thrd_icount = %lld\n", thread_icount_uarch);
   fprintf(fout, "gpgpu_n_tot_w_icount = %lld\n", warp_icount_uarch);
 

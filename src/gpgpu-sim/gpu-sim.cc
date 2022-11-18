@@ -1576,8 +1576,10 @@ void gpgpu_sim::gpu_print_stat() {
   core_cache_stats.print_fail_stats(stdout,
                                     "Total_core_cache_fail_stats_breakdown");
   shader_print_scheduler_stat(stdout, false);
-
+  
+  printf("printing shader core stats\n");
   m_shader_stats->print(stdout);
+  printf("finished printing\n");
 #ifdef GPGPUSIM_POWER_MODEL
   if (m_config.g_power_simulation_enabled) {
     if(m_config.g_power_simulation_mode > 0){
